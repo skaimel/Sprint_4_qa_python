@@ -1,24 +1,108 @@
+import pytest
 from main import BooksCollector
 
-# класс TestBooksCollector объединяет набор тестов, которыми мы покрываем наше приложение BooksCollector
-# обязательно указывать префикс Test
+
 class TestBooksCollector:
 
-    # пример теста:
-    # обязательно указывать префикс test_
-    # дальше идет название метода, который тестируем add_new_book_
-    # затем, что тестируем add_two_books - добавление двух книг
-    def test_add_new_book_add_two_books(self):
-        # создаем экземпляр (объект) класса BooksCollector
+    @pytest.mark.parametrize("name", [
+        "1984",
+        "Преступление и наказание",
+        "Оно",
+        "Властелин колец",
+        "Гарри Поттер и философский камень"
+    ])
+    def test_add_new_book(self, name):
         collector = BooksCollector()
+        collector.add_new_book(name)
+        assert name in collector.get_books_genre()
 
-        # добавляем две книги
-        collector.add_new_book('Гордость и предубеждение и зомби')
-        collector.add_new_book('Что делать, если ваш кот хочет вас убить')
+    @pytest.mark.parametrize("name, genre", [
+        ("1984", "Фантастика"),
+        ("Преступление и наказание", "Детективы"),
+        ("Оно", "Ужасы"),
+        ("Властелин колец", "Фэнтези"),
+        ("Гарри Поттер и философский камень", "Фэнтези")
+    ])
+    def test_get_books_with_specific_genre(self, name, genre):
+        collector = BooksCollector()
+        collector.add_new_book(name)
+        collector.set_book_genre(name, genre)
+        books_with_genre = collector.get_books_with_specific_genre(genre)
+        assert name in books_with_genre
 
-        # проверяем, что добавилось именно две
-        # словарь books_rating, который нам возвращает метод get_books_rating, имеет длину 2
-        assert len(collector.get_books_rating()) == 2
+    @pytest.mark.parametrize("name, genre", [
+        ("1984", "Фантастика"),
+        ("Преступление и наказание", "Детективы"),
+        ("Оно", "Ужасы"),
+        ("Властелин колец", "Фэнтези"),
+        ("Гарри Поттер и философский камень", "Фэнтези")
+    ])
+    def test_no_books_with_unused_genre(self, name, genre):
+        collector = BooksCollector()
+        collector.add_new_book(name)
+        collector.set_book_genre(name, genre)
+        books_with_genre = collector.get_books_with_specific_genre("Приключения")
+        assert books_with_genre == []
 
-    # напиши свои тесты ниже
-    # чтобы тесты были независимыми в каждом из них создавай отдельный экземпляр класса BooksCollector()
+    @pytest.mark.parametrize("name, genre", [
+        ("1984", "Фантастика"),
+        ("Преступление и наказание", "Детективы"),
+        ("Оно", "Ужасы"),
+        ("Властелин колец", "Фэнтези"),
+        ("Гарри Поттер и философский камень", "Фэнтези")
+    ])
+    def test_get_book_genre_dict(self, name, genre):
+        collector = BooksCollector()
+        collector.add_new_book(name)
+        collector.set_book_genre(name, genre)
+        assert isinstance(collector.get_books_genre(), dict)
+
+    @pytest.mark.parametrize("name, genre", [
+        ("1984", "Фантастика"),
+        ("Преступление и наказание", "Детективы"),
+        ("Оно", "Ужасы"),
+        ("Властелин колец", "Фэнтези"),
+        ("Гарри Поттер и философский камень", "Фэнтези")
+    ])
+    def test_no_age_restricted_books_for_kids(self, name, genre):
+        collector = BooksCollector()
+        collector.add_new_book(name)
+        collector.set_book_genre(name, genre)
+        books_for_children = collector.get_books_for_children()
+        assert name not in books_for_children
+
+    @pytest.mark.parametrize("name", [
+        "1984",
+        "Преступление и наказание",
+        "Оно",
+        "Властелин колец",
+        "Гарри Поттер и философский камень"
+    ])
+    def test_add_book_to_favorites(self, name):
+        collector = BooksCollector()
+        collector.add_new_book(name)
+        collector.add_book_in_favorites(name)
+        assert name in collector.get_list_of_favorites_books()
+
+    def test_add_non_dict_book_to_favorites_not_added(self):
+        collector = BooksCollector()
+        name = "Приключения принца"
+        collector.add_book_in_favorites(name)
+        assert collector.get_list_of_favorites_books() == []
+
+    def test_add_book_twice_without_delete(self):
+        collector = BooksCollector()
+        name = "1984"
+        collector.add_new_book(name)
+        collector.add_book_in_favorites(name)
+        collector.add_book_in_favorites(name)
+        assert collector.get_list_of_favorites_books().count(name) == 1
+
+    def test_delete_book_from_favorites(self):
+        collector = BooksCollector()
+        name = "Преступление и наказание"
+        collector.add_new_book(name)
+        collector.add_book_in_favorites(name)
+        collector.delete_book_from_favorites(name)
+        assert name not in collector.favorites
+
